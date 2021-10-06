@@ -13,8 +13,6 @@ Available queues:
 * FixedUpdate
 * EverySecondFrame
 
-IMPORTANT NOTE: Not tested in production but tested on 2019.4 and 2020.3 LTS versions.
-
 # Why?
 
   * Allows more controlled update behaviour.
@@ -49,7 +47,7 @@ public class ExampleScript : MonoBehaviour {
     }
 
     private void PostLateUpdate() {  // this is called after all LateUpdate() methods
-        Debug.Log("PostLateUpdate"); // right before new frame starts
+        Debug.Log("PostLateUpdate");
     }
 }
 ```
