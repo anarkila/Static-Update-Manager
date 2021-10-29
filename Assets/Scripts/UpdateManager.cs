@@ -5,22 +5,22 @@ using UnityEngine;
 using System;
 
 // System.Action based Static UpdateManager
-// Instead of multiple MonoBehaviour scripts calling Unity magic Fixed/Late/Update functions
-// This script loops through all registered Update events
+// Instead of multiple MonoBehaviour scripts calling Unity magic update functions
+// This script loops through all registered actions,
 // whichs eliminates overhead (Native C++ to managed C# calls), see this Unity blog
 // https://blog.unity.com/technology/1k-update-calls
 
-// This also allows custom update flow which can be nice for several reasons
-// For example MonoBehaviour based Jobs, you can start Job(s) early in EarlyUpdate
-// and end them in PostLateUpdate while your other game logic executes
+// This also allows custom update flow which can be beneficial for several reasons:
+// For example MonoBehaviour based Jobs: start Job(s) early in EarlyUpdate
+// and then end them in PostLateUpdate while your other game logic executes
 
-// This works by using Unity's PlayerLoop API which is not that well documented
+// This works by using Unity PlayerLoop API which is not that well documented
 // https://docs.unity3d.com/ScriptReference/LowLevel.PlayerLoop.html
 // See UnityCsReference PlayerLoop.bindings.cs for more information about update order of all Unity native systems
 // https://github.com/Unity-Technologies/UnityCsReference/blob/master/Runtime/Export/PlayerLoop/PlayerLoop.bindings.cs
 
-// NOTE. You have to register and unregister updates manually. Use this with care!
-// For profiling, turn Deep Profile on!
+// NOTE. You have to register and unregister update events manually.
+// For profiling, turn Deep Profile on.
 
 namespace UpdateLoop {
 
@@ -39,33 +39,23 @@ namespace UpdateLoop {
         /// Setup UpdateManager before scene loads
         /// </summary>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]      // Comment this line if you don't want to use this manager!
-        private static void Setup() {
+        private static void SetupUpdateManager() {
             if (setupDone) return;
 
             var playerLoop = PlayerLoop.GetCurrentPlayerLoop();
             for (int i = 0; i < playerLoop.subSystemList.Length; i++) {
-                if (playerLoop.subSystemList[i].type == typeof(PreUpdate)) {
-                    playerLoop.subSystemList[i].updateDelegate += EarlyUpdate;
-                }
-                if (playerLoop.subSystemList[i].type == typeof(Update)) {
-                    playerLoop.subSystemList[i].updateDelegate += Update;
-                }
-                if (playerLoop.subSystemList[i].type == typeof(PreLateUpdate)) {        // MonoBehaviour LateUpdate() calls belong to PreLateUpdate phase
-                    playerLoop.subSystemList[i].updateDelegate += LateUpdate;
-                }
-                if (playerLoop.subSystemList[i].type == typeof(PostLateUpdate)) {
-                    playerLoop.subSystemList[i].updateDelegate += PostLateUpdate;
-                }
-                if (playerLoop.subSystemList[i].type == typeof(FixedUpdate)) {
-                    playerLoop.subSystemList[i].updateDelegate += FixedUpdate;
-                }
+                if (playerLoop.subSystemList[i].type == typeof(PreUpdate)) playerLoop.subSystemList[i].updateDelegate += EarlyUpdate;
+                if (playerLoop.subSystemList[i].type == typeof(Update)) playerLoop.subSystemList[i].updateDelegate += Update;
+                if (playerLoop.subSystemList[i].type == typeof(PreLateUpdate)) playerLoop.subSystemList[i].updateDelegate += LateUpdate;
+                if (playerLoop.subSystemList[i].type == typeof(PostLateUpdate)) playerLoop.subSystemList[i].updateDelegate += PostLateUpdate;
+                if (playerLoop.subSystemList[i].type == typeof(FixedUpdate)) playerLoop.subSystemList[i].updateDelegate += FixedUpdate;
             }
             PlayerLoop.SetPlayerLoop(playerLoop);
             setupDone = true;
 
 
 #if UNITY_EDITOR // You can comment these lines
-            Debug.Log("UpdateManager Initialized");
+            Debug.Log("UpdateManager Initialized.");
 #endif
         }
 
@@ -76,24 +66,12 @@ namespace UpdateLoop {
             if (updateAction == null) return;
 
             switch (updateEvent) {
-                case UpdateEvent.NormalUpdate:
-                    normalUpdate.Add(updateAction);
-                    break;
-                case UpdateEvent.EarlyUpdate:
-                    earlyUpdate.Add(updateAction);
-                    break;
-                case UpdateEvent.NormalLateUpdate:
-                    normalLateUpdate.Add(updateAction);
-                    break;
-                case UpdateEvent.PostLateUpdate:
-                    postLateUpdate.Add(updateAction);
-                    break;
-                case UpdateEvent.FixedUpdate:
-                    fixedUpdate.Add(updateAction);
-                    break;
-                case UpdateEvent.EverySecondFrame:
-                    everySecondFrame.Add(updateAction);
-                    break;
+                case UpdateEvent.NormalUpdate: normalUpdate.Add(updateAction); break;
+                case UpdateEvent.EarlyUpdate: earlyUpdate.Add(updateAction); break;
+                case UpdateEvent.NormalLateUpdate: normalLateUpdate.Add(updateAction); break;
+                case UpdateEvent.PostLateUpdate: postLateUpdate.Add(updateAction); break;
+                case UpdateEvent.FixedUpdate: fixedUpdate.Add(updateAction); break;
+                case UpdateEvent.EverySecondFrame: everySecondFrame.Add(updateAction); break;
             }
         }
 
@@ -104,24 +82,12 @@ namespace UpdateLoop {
             if (updateAction == null) return;
 
             switch (updateEvent) {
-                case UpdateEvent.NormalUpdate:
-                    normalUpdate.Remove(updateAction);
-                    break;
-                case UpdateEvent.EarlyUpdate:
-                    earlyUpdate.Remove(updateAction);
-                    break;
-                case UpdateEvent.NormalLateUpdate:
-                    normalLateUpdate.Remove(updateAction);
-                    break;
-                case UpdateEvent.PostLateUpdate:
-                    postLateUpdate.Remove(updateAction);
-                    break;
-                case UpdateEvent.FixedUpdate:
-                    fixedUpdate.Remove(updateAction);
-                    break;
-                case UpdateEvent.EverySecondFrame:
-                    everySecondFrame.Remove(updateAction);
-                    break;
+                case UpdateEvent.NormalUpdate: normalUpdate.Remove(updateAction); break;
+                case UpdateEvent.EarlyUpdate: earlyUpdate.Remove(updateAction); break;
+                case UpdateEvent.NormalLateUpdate: normalLateUpdate.Remove(updateAction); break;
+                case UpdateEvent.PostLateUpdate: postLateUpdate.Remove(updateAction); break;
+                case UpdateEvent.FixedUpdate: fixedUpdate.Remove(updateAction); break;
+                case UpdateEvent.EverySecondFrame:  everySecondFrame.Remove(updateAction); break;
             }
         }
 
