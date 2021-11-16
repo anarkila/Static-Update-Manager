@@ -21,14 +21,14 @@ Available queues:
 
 # How To Use
 
-1. Download and import [StaticUpdateManager package](https://github.com/anarkila/Static-Update-Manager/releases/download/v1.01/StaticUpdateManager.unitypackage) into your project.
+1. Download and import [StaticUpdateManager package](https://github.com/anarkila/Static-Update-Manager/releases/download/v1.02/StaticUpdateManager.unitypackage) into your project.
 
-2. Add/Remove events to/from UpdateManager like below. Also see [ExampleScript.cs](https://github.com/anarkila/Static-Update-Manager/blob/main/Assets/Scripts/ExampleScript.cs)
+2. Add / Remove events to / from UpdateManager like below.
 
 Remember to remove your events when you no longer need them!
 
 ```C#
-using UpdateLoop;
+using UnityEngine;
 
 public class ExampleScript : MonoBehaviour {
 
