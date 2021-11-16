@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
-using UpdateLoop;
 
-public class ExampleScript : MonoBehaviour {
+public class UpdateManagerExample : MonoBehaviour {
 
     private void OnEnable() {
         // Add events to UpdateManager when this script/gameobject is enabled

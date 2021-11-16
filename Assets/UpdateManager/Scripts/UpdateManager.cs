@@ -22,142 +22,140 @@ using System;
 // NOTE. You have to register and unregister update events manually.
 // For profiling, turn Deep Profile on.
 
-namespace UpdateLoop {
 
-    public static class UpdateManager {
+public static class UpdateManager {
 
-        private static List<Action> normalUpdate = new List<Action>(50);                // normal Update() behaviour
-        private static List<Action> earlyUpdate = new List<Action>(50);                 // early update (ideal for starting Jobs)
-        private static List<Action> normalLateUpdate = new List<Action>(50);            // normal LateUpdate() behaviour
-        private static List<Action> postLateUpdate = new List<Action>(50);              // postlateupdate (ideal for ending Jobs)
-        private static List<Action> fixedUpdate = new List<Action>(50);                 // normal FixedUpdate() behaviour
-        private static List<Action> everySecondFrame = new List<Action>(50);            // every second frame
-        private static bool setupDone = false;
-        private static int frameCount = 0;
+    private static List<Action> normalUpdate = new List<Action>(50);                // normal Update() behaviour
+    private static List<Action> earlyUpdate = new List<Action>(50);                 // early update (ideal for starting Jobs)
+    private static List<Action> normalLateUpdate = new List<Action>(50);            // normal LateUpdate() behaviour
+    private static List<Action> postLateUpdate = new List<Action>(50);              // postlateupdate (ideal for ending Jobs)
+    private static List<Action> fixedUpdate = new List<Action>(50);                 // normal FixedUpdate() behaviour
+    private static List<Action> everySecondFrame = new List<Action>(50);            // every second frame
+    private static bool setupDone = false;
+    private static int frameCount = 0;
 
-        /// <summary> 
-        /// Setup UpdateManager before scene loads
-        /// </summary>
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]      // Comment this line if you don't want to use this manager!
-        private static void SetupUpdateManager() {
-            if (setupDone) return;
+    /// <summary> 
+    /// Setup UpdateManager before scene loads
+    /// </summary>
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]      // Comment this line if you don't want to use this manager!
+    private static void SetupUpdateManager() {
+        if (setupDone) return;
 
-            var playerLoop = PlayerLoop.GetCurrentPlayerLoop();
-            for (int i = 0; i < playerLoop.subSystemList.Length; i++) {
-                if (playerLoop.subSystemList[i].type == typeof(PreUpdate)) playerLoop.subSystemList[i].updateDelegate += EarlyUpdate;
-                if (playerLoop.subSystemList[i].type == typeof(Update)) playerLoop.subSystemList[i].updateDelegate += Update;
-                if (playerLoop.subSystemList[i].type == typeof(PreLateUpdate)) playerLoop.subSystemList[i].updateDelegate += LateUpdate;
-                if (playerLoop.subSystemList[i].type == typeof(PostLateUpdate)) playerLoop.subSystemList[i].updateDelegate += PostLateUpdate;
-                if (playerLoop.subSystemList[i].type == typeof(FixedUpdate)) playerLoop.subSystemList[i].updateDelegate += FixedUpdate;
-            }
-            PlayerLoop.SetPlayerLoop(playerLoop);
-            setupDone = true;
+        var playerLoop = PlayerLoop.GetCurrentPlayerLoop();
+        for (int i = 0; i < playerLoop.subSystemList.Length; i++) {
+            if (playerLoop.subSystemList[i].type == typeof(PreUpdate)) playerLoop.subSystemList[i].updateDelegate += EarlyUpdate;
+            if (playerLoop.subSystemList[i].type == typeof(Update)) playerLoop.subSystemList[i].updateDelegate += Update;
+            if (playerLoop.subSystemList[i].type == typeof(PreLateUpdate)) playerLoop.subSystemList[i].updateDelegate += LateUpdate;
+            if (playerLoop.subSystemList[i].type == typeof(PostLateUpdate)) playerLoop.subSystemList[i].updateDelegate += PostLateUpdate;
+            if (playerLoop.subSystemList[i].type == typeof(FixedUpdate)) playerLoop.subSystemList[i].updateDelegate += FixedUpdate;
+        }
+        PlayerLoop.SetPlayerLoop(playerLoop);
+        setupDone = true;
 
 
 #if UNITY_EDITOR // You can comment these lines
-            Debug.Log("UpdateManager Initialized.");
+        Debug.Log("UpdateManager Initialized.");
 #endif
-        }
+    }
 
-        /// <summary> 
-        /// Add event (Action) to UpdateManager
-        /// </summary>
-        public static void AddUpdateEvent(UpdateEvent updateEvent, Action updateAction) {
-            if (updateAction == null) return;
+    /// <summary> 
+    /// Add event (Action) to UpdateManager
+    /// </summary>
+    public static void AddUpdateEvent(UpdateEvent updateEvent, Action updateAction) {
+        if (updateAction == null) return;
 
-            switch (updateEvent) {
-                case UpdateEvent.NormalUpdate: normalUpdate.Add(updateAction); break;
-                case UpdateEvent.EarlyUpdate: earlyUpdate.Add(updateAction); break;
-                case UpdateEvent.NormalLateUpdate: normalLateUpdate.Add(updateAction); break;
-                case UpdateEvent.PostLateUpdate: postLateUpdate.Add(updateAction); break;
-                case UpdateEvent.FixedUpdate: fixedUpdate.Add(updateAction); break;
-                case UpdateEvent.EverySecondFrame: everySecondFrame.Add(updateAction); break;
-            }
-        }
-
-        /// <summary> 
-        /// Remove event (Action) from UpdateManager
-        /// </summary>
-        public static void RemoveUpdateEvent(UpdateEvent updateEvent, Action updateAction) {
-            if (updateAction == null) return;
-
-            switch (updateEvent) {
-                case UpdateEvent.NormalUpdate: normalUpdate.Remove(updateAction); break;
-                case UpdateEvent.EarlyUpdate: earlyUpdate.Remove(updateAction); break;
-                case UpdateEvent.NormalLateUpdate: normalLateUpdate.Remove(updateAction); break;
-                case UpdateEvent.PostLateUpdate: postLateUpdate.Remove(updateAction); break;
-                case UpdateEvent.FixedUpdate: fixedUpdate.Remove(updateAction); break;
-                case UpdateEvent.EverySecondFrame:  everySecondFrame.Remove(updateAction); break;
-            }
-        }
-
-        /// <summary> 
-        /// Loop through all the registered EarlyUpdate events
-        /// </summary>
-        private static void EarlyUpdate() {
-            for (int i = 0; i < earlyUpdate.Count; i++) {
-                earlyUpdate[i].Invoke();
-            }
-        }
-
-        /// <summary> 
-        /// Loop through all the registered Update events
-        /// </summary>
-        private static void Update() {
-            for (int i = 0; i < normalUpdate.Count; i++) {
-                normalUpdate[i].Invoke();
-            }
-
-            ++frameCount;  // You can move these 5 lines to Early/Post/lateUpdate if you wish
-            if (frameCount % 2 == 0) {
-                EverySecondFrameUpdate();
-                frameCount = 0;
-            }
-        }
-
-        /// <summary> 
-        /// Loop through all the registered LateUpdate events
-        /// </summary>
-        private static void LateUpdate() {
-            for (int i = 0; i < normalLateUpdate.Count; i++) {
-                normalLateUpdate[i].Invoke();
-            }
-        }
-
-        /// <summary> 
-        /// Loop through all the registered PostLateUpdate events
-        /// </summary>
-        private static void PostLateUpdate() {
-            for (int i = 0; i < postLateUpdate.Count; i++) {
-                postLateUpdate[i].Invoke();
-            }
-        }
-
-        /// <summary> 
-        /// Loop through all the registered FixedUpdate events
-        /// </summary>
-        private static void FixedUpdate() {
-            for (int i = 0; i < fixedUpdate.Count; i++) {
-                fixedUpdate[i].Invoke();
-            }
-        }
-
-        /// <summary> 
-        /// Loop through all the registered FixedUpdate events
-        /// </summary>
-        private static void EverySecondFrameUpdate() {
-            for (int i = 0; i < everySecondFrame.Count; i++) {
-                everySecondFrame[i].Invoke();
-            }
+        switch (updateEvent) {
+            case UpdateEvent.NormalUpdate: normalUpdate.Add(updateAction); break;
+            case UpdateEvent.EarlyUpdate: earlyUpdate.Add(updateAction); break;
+            case UpdateEvent.NormalLateUpdate: normalLateUpdate.Add(updateAction); break;
+            case UpdateEvent.PostLateUpdate: postLateUpdate.Add(updateAction); break;
+            case UpdateEvent.FixedUpdate: fixedUpdate.Add(updateAction); break;
+            case UpdateEvent.EverySecondFrame: everySecondFrame.Add(updateAction); break;
         }
     }
 
-    public enum UpdateEvent {
-        EarlyUpdate,
-        NormalUpdate,
-        NormalLateUpdate,
-        PostLateUpdate,
-        FixedUpdate,
-        EverySecondFrame
+    /// <summary> 
+    /// Remove event (Action) from UpdateManager
+    /// </summary>
+    public static void RemoveUpdateEvent(UpdateEvent updateEvent, Action updateAction) {
+        if (updateAction == null) return;
+
+        switch (updateEvent) {
+            case UpdateEvent.NormalUpdate: normalUpdate.Remove(updateAction); break;
+            case UpdateEvent.EarlyUpdate: earlyUpdate.Remove(updateAction); break;
+            case UpdateEvent.NormalLateUpdate: normalLateUpdate.Remove(updateAction); break;
+            case UpdateEvent.PostLateUpdate: postLateUpdate.Remove(updateAction); break;
+            case UpdateEvent.FixedUpdate: fixedUpdate.Remove(updateAction); break;
+            case UpdateEvent.EverySecondFrame: everySecondFrame.Remove(updateAction); break;
+        }
     }
+
+    /// <summary> 
+    /// Loop through all the registered EarlyUpdate events
+    /// </summary>
+    private static void EarlyUpdate() {
+        for (int i = 0; i < earlyUpdate.Count; i++) {
+            earlyUpdate[i].Invoke();
+        }
+    }
+
+    /// <summary> 
+    /// Loop through all the registered Update events
+    /// </summary>
+    private static void Update() {
+        for (int i = 0; i < normalUpdate.Count; i++) {
+            normalUpdate[i].Invoke();
+        }
+
+        ++frameCount;  // You can move these 5 lines to Early/Post/lateUpdate if you wish
+        if (frameCount % 2 == 0) {
+            EverySecondFrameUpdate();
+            frameCount = 0;
+        }
+    }
+
+    /// <summary> 
+    /// Loop through all the registered LateUpdate events
+    /// </summary>
+    private static void LateUpdate() {
+        for (int i = 0; i < normalLateUpdate.Count; i++) {
+            normalLateUpdate[i].Invoke();
+        }
+    }
+
+    /// <summary> 
+    /// Loop through all the registered PostLateUpdate events
+    /// </summary>
+    private static void PostLateUpdate() {
+        for (int i = 0; i < postLateUpdate.Count; i++) {
+            postLateUpdate[i].Invoke();
+        }
+    }
+
+    /// <summary> 
+    /// Loop through all the registered FixedUpdate events
+    /// </summary>
+    private static void FixedUpdate() {
+        for (int i = 0; i < fixedUpdate.Count; i++) {
+            fixedUpdate[i].Invoke();
+        }
+    }
+
+    /// <summary> 
+    /// Loop through all the registered FixedUpdate events
+    /// </summary>
+    private static void EverySecondFrameUpdate() {
+        for (int i = 0; i < everySecondFrame.Count; i++) {
+            everySecondFrame[i].Invoke();
+        }
+    }
+}
+
+public enum UpdateEvent {
+    EarlyUpdate,
+    NormalUpdate,
+    NormalLateUpdate,
+    PostLateUpdate,
+    FixedUpdate,
+    EverySecondFrame
 }

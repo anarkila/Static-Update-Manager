@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
-using UpdateLoop;
 
-public class RotateCube : MonoBehaviour {
+public class RotateCubeExample : MonoBehaviour {
 
     [SerializeField] private float degreesPerSecond = 29.0f;
     [SerializeField] private float amplitude = 0.5f;
